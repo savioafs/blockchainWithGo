@@ -1,6 +1,14 @@
 package blockchain
 
-import "math/big"
+import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
+	"fmt"
+	"log"
+	"math"
+	"math/big"
+)
 
 const Difficulty = 12 // create algorithm for chose to difficulty
 
@@ -18,4 +26,54 @@ func NewProof(b *Block) *ProofOfWork {
 	}
 
 	return pow
+}
+
+func (pow *ProofOfWork) InitData(nonce int) []byte {
+	data := bytes.Join(
+		[][]byte{
+			pow.Block.PreviousHash,
+			pow.Block.Data,
+			ToHex(int64(nonce)),
+			ToHex(int64(Difficulty)),
+		},
+		[]byte{},
+	)
+
+	return data
+}
+
+func ToHex(num int64) []byte {
+	buff := new(bytes.Buffer)
+	err := binary.Write(buff, binary.BigEndian, num)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return buff.Bytes()
+}
+
+func (pow *ProofOfWork) Run() (int, []byte) {
+	var (
+		intHash big.Int
+		hash    [32]byte
+	)
+
+	nonce := 0
+
+	for nonce < math.MaxInt64 {
+		data := pow.InitData(nonce)
+		hash = sha256.Sum256(data)
+
+		fmt.Printf("\r%x", hash)
+		intHash.SetBytes(hash[:])
+
+		if intHash.Cmp(pow.Target) == -1 {
+			break
+		} else {
+			nonce++
+		}
+	}
+	fmt.Println()
+
+	return nonce, hash[:]
 }
