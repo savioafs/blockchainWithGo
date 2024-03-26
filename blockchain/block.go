@@ -7,10 +7,6 @@ type Block struct {
 	Nonce        int    `json:"nonce"`
 }
 
-type Blockchain struct {
-	Blocks []*Block `json:"blocks"`
-}
-
 func CreateBlock(data string, previousHash []byte) *Block {
 	block := &Block{[]byte{}, []byte(data), previousHash, 0}
 	pow := NewProof(block)
@@ -22,17 +18,6 @@ func CreateBlock(data string, previousHash []byte) *Block {
 	return block
 }
 
-func (chain *Blockchain) AddBlock(data string) {
-	previousBlock := chain.Blocks[len(chain.Blocks)-1]
-	newBlock := CreateBlock(data, previousBlock.Hash)
-
-	chain.Blocks = append(chain.Blocks, newBlock)
-}
-
 func BlockGenesis() *Block {
 	return CreateBlock("Genesis", []byte{})
-}
-
-func InitBlockchain() *Blockchain {
-	return &Blockchain{[]*Block{BlockGenesis()}}
 }
